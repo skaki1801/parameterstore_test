@@ -21,8 +21,12 @@ pipeline {
           def parameterValue = params.PARAMETER_VALUE
 
           withAWS(region: env.AWS_REGION, credentials: 'aws_creds') {
-            sh "aws secretsmanager create-secret --name ${secretName} --secret-string ${secretValue}"
-            sh "aws ssm put-parameter --name ${parameterName} --value ${parameterValue} --type String"
+            mask("**${secretValue}**") {
+              sh "aws secretsmanager create-secret --name ${secretName} --secret-string ${secretValue}"
+            }
+            mask("**${parameterValue}**") {
+              sh "aws ssm put-parameter --name ${parameterName} --value ${parameterValue} --type String"
+            }
           }
         }
       }
