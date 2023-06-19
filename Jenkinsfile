@@ -4,43 +4,26 @@ pipeline {
       AWS_REGION = 'eu-west-2'
   }
 
+  parameters {
+    string(name: 'SECRET_NAME', defaultValue: '', description: 'Enter the secret name')
+    string(name: 'SECRET_VALUE', defaultValue: '', description: 'Enter the secret value')
+    string(name: 'PARAMETER_NAME', defaultValue: '', description: 'Enter the parameter store name')
+    string(name: 'PARAMETER_VALUE', defaultValue: '', description: 'Enter the parameter store value')
+  }
+
   stages {
-    stage('User Input') {
-      steps {
-
-        script {
-          def secretNameInput = input message: 'Enter Secret Name', parameters: [
-            string(name: 'SECRET_NAME', defaultValue: '', description: 'Enter the secret name')
-          ]
-          def secretValueInput = input message: 'Enter Secret Value', parameters: [
-            string(name: 'SECRET_VALUE', defaultValue: '', description: 'Enter the secret value')
-          ]
-          def parameterNameInput = input message: 'Enter Parameter Name', parameters: [
-            string(name: 'PARAMETER_NAME', defaultValue: '', description: 'Enter the parameter store name')
-          ]
-          def parameterValueInput = input message: 'Enter Parameter Value', parameters: [
-            string(name: 'PARAMETER_VALUE', defaultValue: '', description: 'Enter the parameter store value')
-          ]
-
-
-          secretName = secretNameInput.SECRET_NAME
-          secretValue = secretValueInput.SECRET_VALUE
-          parameterName = parameterNameInput.PARAMETER_NAME
-          parameterValue = parameterValueInput.PARAMETER_VALUE
-        }
-      }
-    }
-
     stage('Create Secrets and Parameters') {
       steps {
+        script {
+          def secretName = params.SECRET_NAME
+          def secretValue = params.SECRET_VALUE
+          def parameterName = params.PARAMETER_NAME
+          def parameterValue = params.PARAMETER_VALUE
 
-        withAWS(region: AWS_REGION, credentials: 'aws_creds') {
-          sh "aws secretsmanager create-secret --name ${secretName} --secret-string ${secretValue}"
-        }
-
-
-        withAWS(region: awsRegion, credentials: 'my-credentials') {
-          sh "aws ssm put-parameter --name ${parameterName} --value ${parameterValue} --type String"
+          withAWS(region: env.AWS_REGION, credentials: 'aws_creds') {
+            sh "aws secretsmanager create-secret --name ${secretName} --secret-string ${secretValue} --secret-string-encryption"
+            sh "aws ssm put-parameter --name ${parameterName} --value ${parameterValue} --type String"
+          }
         }
       }
     }
